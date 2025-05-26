@@ -1,4 +1,14 @@
 
+export interface Union {
+  id: string;
+  name: string;
+  leaderId: string; // Member ID of the union leader
+  purse: number; // Union's financial balance
+  memberCount: number;
+  createdDate: Date;
+  status: "active" | "inactive";
+}
+
 export interface Member {
   id: string;
   name: string;
@@ -7,6 +17,7 @@ export interface Member {
   joinDate: Date;
   status: "active" | "inactive";
   balance: number;
+  unionId: string; // Reference to the union this member belongs to
 }
 
 export interface Loan {
@@ -39,6 +50,7 @@ export interface Collector {
   assignedMembers: number;
   collectionsToday: number;
   totalCollected: number;
+  unionId: string; // Collectors are assigned to specific unions
 }
 
 export interface CollectionSummary {

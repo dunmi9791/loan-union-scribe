@@ -1,6 +1,23 @@
 
-import { members, loans, installments, collectors, collectionSummary } from "../data/mockData";
-import { Member, Loan, Installment, Collector } from "../types";
+import { members, loans, installments, collectors, collectionSummary, unions } from "../data/mockData";
+import { Member, Loan, Installment, Collector, Union } from "../types";
+
+// Union utilities
+export const getAllUnions = (): Union[] => unions;
+
+export const getUnionById = (id: string): Union | undefined => 
+  unions.find(union => union.id === id);
+
+export const getUnionMembers = (unionId: string): Member[] => 
+  members.filter(member => member.unionId === unionId);
+
+export const getUnionCollectors = (unionId: string): Collector[] => 
+  collectors.filter(collector => collector.unionId === unionId);
+
+export const getUnionLeader = (unionId: string): Member | undefined => {
+  const union = getUnionById(unionId);
+  return union ? getMemberById(union.leaderId) : undefined;
+};
 
 // Member utilities
 export const getAllMembers = (): Member[] => members;
@@ -13,6 +30,11 @@ export const getMemberLoans = (memberId: string): Loan[] =>
 
 export const getMemberInstallments = (memberId: string): Installment[] => 
   installments.filter(installment => installment.memberId === memberId);
+
+export const getMemberUnion = (memberId: string): Union | undefined => {
+  const member = getMemberById(memberId);
+  return member ? getUnionById(member.unionId) : undefined;
+};
 
 // Loan utilities
 export const getAllLoans = (): Loan[] => loans;
@@ -43,6 +65,11 @@ export const getCollectorById = (id: string): Collector | undefined =>
 
 export const getCollectorInstallments = (collectorId: string): Installment[] => 
   installments.filter(installment => installment.collectorId === collectorId);
+
+export const getCollectorUnion = (collectorId: string): Union | undefined => {
+  const collector = getCollectorById(collectorId);
+  return collector ? getUnionById(collector.unionId) : undefined;
+};
 
 // Collection summary
 export const getCollectionSummary = () => collectionSummary;

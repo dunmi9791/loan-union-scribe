@@ -9,6 +9,7 @@ import Members from "./pages/Members";
 import Loans from "./pages/Loans";
 import Collectors from "./pages/Collectors";
 import Schedule from "./pages/Schedule";
+import Unions from "./pages/Unions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +22,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/unions" element={<Unions />} />
           <Route path="/members" element={<Members />} />
           <Route path="/loans" element={<Loans />} />
           <Route path="/collectors" element={<Collectors />} />

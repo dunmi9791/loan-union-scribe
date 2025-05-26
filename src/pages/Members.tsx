@@ -2,7 +2,7 @@
 import React from "react";
 import Layout from "@/components/layout/Layout";
 import { Card } from "@/components/ui/card";
-import { getAllMembers, formatCurrency, getMemberLoans } from "@/utils/dataUtils";
+import { getAllMembers, formatCurrency, getMemberLoans, getMemberUnion } from "@/utils/dataUtils";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { useNavigate } from "react-router-dom";
 
@@ -32,6 +32,9 @@ const Members = () => {
                   Name
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Union
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Contact
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -52,50 +55,57 @@ const Members = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {members.map((member) => (
-                <tr key={member.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 rounded-full bg-loan-accent flex items-center justify-center">
-                        <span className="font-medium text-loan-primary">
-                          {member.name.split(' ').map(n => n[0]).join('')}
-                        </span>
+              {members.map((member) => {
+                const memberUnion = getMemberUnion(member.id);
+                return (
+                  <tr key={member.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="h-10 w-10 rounded-full bg-loan-accent flex items-center justify-center">
+                          <span className="font-medium text-loan-primary">
+                            {member.name.split(' ').map(n => n[0]).join('')}
+                          </span>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{member.name}</div>
+                          <div className="text-sm text-gray-500">{member.email}</div>
+                        </div>
                       </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                        <div className="text-sm text-gray-500">{member.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {member.contactNumber}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(member.joinDate).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <StatusBadge status={member.status} />
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {getMemberLoanCount(member.id)}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap font-medium text-gray-900">
-                    {formatCurrency(member.balance)}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm">
-                    <button 
-                      className="text-loan-primary hover:text-loan-secondary font-medium"
-                      onClick={() => navigate(`/members/${member.id}`)}
-                    >
-                      View
-                    </button>
-                    <span className="px-2 text-gray-300">|</span>
-                    <button className="text-loan-primary hover:text-loan-secondary font-medium">
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{memberUnion?.name}</div>
+                      <div className="text-sm text-gray-500">Purse: {formatCurrency(memberUnion?.purse || 0)}</div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {member.contactNumber}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(member.joinDate).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <StatusBadge status={member.status} />
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {getMemberLoanCount(member.id)}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap font-medium text-gray-900">
+                      {formatCurrency(member.balance)}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm">
+                      <button 
+                        className="text-loan-primary hover:text-loan-secondary font-medium"
+                        onClick={() => navigate(`/members/${member.id}`)}
+                      >
+                        View
+                      </button>
+                      <span className="px-2 text-gray-300">|</span>
+                      <button className="text-loan-primary hover:text-loan-secondary font-medium">
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

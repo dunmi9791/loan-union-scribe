@@ -1,5 +1,5 @@
 
-import { Member, Loan, Installment, Collector, CollectionSummary } from "../types";
+import { Member, Loan, Installment, Collector, CollectionSummary, Union } from "../types";
 
 // Helper function to generate random dates
 const randomDate = (start: Date, end: Date) => {
@@ -9,16 +9,61 @@ const randomDate = (start: Date, end: Date) => {
 // Helper function to generate random IDs
 const generateId = () => Math.random().toString(36).substring(2, 10);
 
-// Generate mock members
-export const members: Member[] = Array.from({ length: 15 }, (_, i) => ({
-  id: generateId(),
-  name: `Member ${i + 1}`,
-  contactNumber: `+1${Math.floor(Math.random() * 900000000 + 1000000000)}`,
-  email: `member${i + 1}@example.com`,
-  joinDate: randomDate(new Date(2020, 0, 1), new Date()),
-  status: Math.random() > 0.2 ? "active" : "inactive",
-  balance: parseFloat((Math.random() * 5000).toFixed(2))
-}));
+// Generate mock unions first
+export const unions: Union[] = [
+  {
+    id: "union1",
+    name: "Downtown Workers Union",
+    leaderId: "", // Will be set after generating members
+    purse: 25000.50,
+    memberCount: 0, // Will be calculated
+    createdDate: new Date(2019, 5, 15),
+    status: "active"
+  },
+  {
+    id: "union2", 
+    name: "Eastside Community Union",
+    leaderId: "", // Will be set after generating members
+    purse: 18750.75,
+    memberCount: 0, // Will be calculated
+    createdDate: new Date(2020, 2, 8),
+    status: "active"
+  },
+  {
+    id: "union3",
+    name: "Industrial Workers Union",
+    leaderId: "", // Will be set after generating members
+    purse: 32100.25,
+    memberCount: 0, // Will be calculated
+    createdDate: new Date(2018, 9, 22),
+    status: "active"
+  }
+];
+
+// Generate mock members with union assignments
+export const members: Member[] = Array.from({ length: 15 }, (_, i) => {
+  const unionId = unions[i % unions.length].id; // Distribute members across unions
+  return {
+    id: generateId(),
+    name: `Member ${i + 1}`,
+    contactNumber: `+1${Math.floor(Math.random() * 900000000 + 1000000000)}`,
+    email: `member${i + 1}@example.com`,
+    joinDate: randomDate(new Date(2020, 0, 1), new Date()),
+    status: Math.random() > 0.2 ? "active" : "inactive",
+    balance: parseFloat((Math.random() * 5000).toFixed(2)),
+    unionId
+  };
+});
+
+// Set union leaders and member counts
+unions[0].leaderId = members.find(m => m.unionId === "union1")?.id || "";
+unions[1].leaderId = members.find(m => m.unionId === "union2")?.id || "";
+unions[2].leaderId = members.find(m => m.unionId === "union3")?.id || "";
+
+// Calculate member counts for each union
+unions.forEach(union => {
+  union.memberCount = members.filter(m => m.unionId === union.id).length;
+});
 
 // Generate mock loans
 export const loans: Loan[] = members.slice(0, 12).map((member, i) => {
@@ -46,16 +91,20 @@ export const loans: Loan[] = members.slice(0, 12).map((member, i) => {
   };
 });
 
-// Generate mock collectors
-export const collectors: Collector[] = Array.from({ length: 5 }, (_, i) => ({
-  id: generateId(),
-  name: `Collector ${i + 1}`,
-  contactNumber: `+1${Math.floor(Math.random() * 900000000 + 1000000000)}`,
-  email: `collector${i + 1}@union.org`,
-  assignedMembers: Math.floor(Math.random() * 10) + 1,
-  collectionsToday: Math.floor(Math.random() * 5),
-  totalCollected: parseFloat((Math.random() * 20000 + 5000).toFixed(2))
-}));
+// Generate mock collectors with union assignments
+export const collectors: Collector[] = Array.from({ length: 5 }, (_, i) => {
+  const unionId = unions[i % unions.length].id; // Distribute collectors across unions
+  return {
+    id: generateId(),
+    name: `Collector ${i + 1}`,
+    contactNumber: `+1${Math.floor(Math.random() * 900000000 + 1000000000)}`,
+    email: `collector${i + 1}@union.org`,
+    assignedMembers: Math.floor(Math.random() * 10) + 1,
+    collectionsToday: Math.floor(Math.random() * 5),
+    totalCollected: parseFloat((Math.random() * 20000 + 5000).toFixed(2)),
+    unionId
+  };
+});
 
 // Generate mock installments
 export const installments: Installment[] = [];

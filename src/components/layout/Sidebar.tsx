@@ -7,7 +7,8 @@ import {
   Users, 
   Coins, 
   FileText, 
-  User, 
+  User,
+  Building2
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -18,6 +19,11 @@ const Sidebar = () => {
       name: "Dashboard", 
       path: "/", 
       icon: <FileText className="h-5 w-5" /> 
+    },
+    { 
+      name: "Unions", 
+      path: "/unions", 
+      icon: <Building2 className="h-5 w-5" /> 
     },
     { 
       name: "Members", 
