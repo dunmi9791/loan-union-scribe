@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "80:80"
+    environment:
+      - VITE_ODOO_URL=${VITE_ODOO_URL:-https://your-odoo-instance.com}
+      - VITE_ODOO_DB=${VITE_ODOO_DB:-your-database-name}

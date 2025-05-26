@@ -62,7 +62,18 @@ This project is built with:
 
 ## How can I deploy this project?
 
+### Using Lovable
+
 Simply open [Lovable](https://lovable.dev/projects/5ddad4b3-2042-419e-8905-bcd9607ad204) and click on Share -> Publish.
+
+### Using Docker
+
+This project can be containerized using Docker. For detailed instructions, see [DOCKER.md](DOCKER.md).
+
+```sh
+# Quick start with Docker Compose
+docker-compose up -d
+```
 
 ## Can I connect a custom domain to my Lovable project?
 
