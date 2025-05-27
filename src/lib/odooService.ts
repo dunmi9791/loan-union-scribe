@@ -30,13 +30,11 @@ class OdooService {
 
       const response = await axios.post(`${this.config.baseUrl}/web/session/authenticate`, {
         jsonrpc: '2.0',
-        method: 'call',
         params: {
           db: this.config.db,
           login: username,
           password: password,
-        },
-        id: Math.floor(Math.random() * 1000000000),
+        }
       });
 
       // Log the complete response to see what we're getting
@@ -128,7 +126,6 @@ class OdooService {
     try {
       await axios.post(`${this.config.baseUrl}/web/session/destroy`, {
         jsonrpc: '2.0',
-        method: 'call',
       }, {
         headers: {
           'Cookie': this.session.sessionId,
@@ -149,14 +146,12 @@ class OdooService {
     try {
       const response = await axios.post(`${this.config.baseUrl}/web/dataset/call_kw`, {
         jsonrpc: '2.0',
-        method: 'call',
         params: {
           model: model,
           method: method,
           args: args,
           kwargs: kwargs,
-        },
-        id: Math.floor(Math.random() * 1000000000),
+        }
       }, {
         headers: {
           'Cookie': this.session.sessionId,
