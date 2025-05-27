@@ -21,7 +21,7 @@ const OdooLogin: React.FC = () => {
       <Card className="w-[350px]">
         <CardHeader>
           <CardTitle>Login to Ranchi</CardTitle>
-          <CardDescription>Enter your Odoo credentials to continue</CardDescription>
+          <CardDescription>Enter your Ranchi credentials to continue</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
