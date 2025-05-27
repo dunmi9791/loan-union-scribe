@@ -27,7 +27,7 @@ class OdooService {
         db: this.config.db, 
         username 
       });
-      
+
       const response = await axios.post(`${this.config.baseUrl}/web/session/authenticate`, {
         jsonrpc: '2.0',
         method: 'call',
@@ -38,7 +38,7 @@ class OdooService {
         },
         id: Math.floor(Math.random() * 1000000000),
       });
-  
+
       // Log the complete response to see what we're getting
       console.log('Raw Authentication Response:', {
         status: response.status,
@@ -46,44 +46,60 @@ class OdooService {
         headers: response.headers,
         data: JSON.stringify(response.data, null, 2)
       });
-  
+
+      // Check if we have a valid JSON-RPC response
+      if (typeof response.data !== 'object') {
+        console.error('Authentication response is not a valid JSON object:', response.data);
+        throw new Error('Authentication failed: Server returned an invalid response format');
+      }
+
+      // Check if the response contains an error
       if (response.data.error) {
         console.error('Odoo returned an error:', response.data.error);
-        throw new Error(response.data.error.data?.message || 'Authentication failed');
+        // Safely access error message with optional chaining
+        const errorMessage = response.data.error.data?.message || 
+                            response.data.error.message || 
+                            'Authentication failed';
+        throw new Error(errorMessage);
       }
-  
+
       // Check if result exists before trying to access its properties
       if (!response.data.result) {
         console.error('Authentication response missing result. Full response:', response.data);
-        
+
         // If we have a response but no result and no error, try to handle common cases
         if (response.data.id && typeof response.data.id === 'number') {
           // We have a valid jsonrpc response but no result - this could mean authentication failed silently
           throw new Error('Authentication failed: Server accepted request but returned no user data');
         }
-        
-        throw new Error('Authentication failed: Invalid response format');
+
+        // Check if the response might be a login page or other HTML content
+        if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE html>')) {
+          throw new Error('Authentication failed: Server returned HTML instead of JSON. Check your server URL and credentials.');
+        }
+
+        throw new Error('Authentication failed: Invalid response format. Check server configuration and credentials.');
       }
-  
+
       if (!response.data.result.uid) {
         console.error('Authentication response missing uid. Result object:', response.data.result);
         throw new Error('Authentication failed: User ID not found');
       }
-  
+
       // Log successful authentication details
       console.log('Authentication successful:', {
         uid: response.data.result.uid,
         hasContext: !!response.data.result.user_context,
         hasCookie: !!response.headers['set-cookie']
       });
-  
+
       this.session = {
         uid: response.data.result.uid,
         username: username,
         sessionId: response.headers['set-cookie']?.[0]?.split(';')[0] || '',
         context: response.data.result.user_context || {},
       };
-  
+
       return this.session;
     } catch (error) {
       // If it's a network error or server error, provide more helpful message
@@ -100,7 +116,7 @@ class OdooService {
           throw new Error(`Authentication failed: Server returned ${error.response.status} ${error.response.statusText}`);
         }
       }
-      
+
       console.error('Odoo login error:', error);
       throw error;
     }
@@ -147,8 +163,24 @@ class OdooService {
         }
       });
 
+      // Check if we have a valid JSON-RPC response
+      if (typeof response.data !== 'object') {
+        console.error('API response is not a valid JSON object:', response.data);
+        throw new Error('API call failed: Server returned an invalid response format');
+      }
+
       if (response.data.error) {
-        throw new Error(response.data.error.data.message || 'API call failed');
+        // Safely access error message with optional chaining
+        const errorMessage = response.data.error.data?.message || 
+                            response.data.error.message || 
+                            'API call failed';
+        throw new Error(errorMessage);
+      }
+
+      // Check if result exists before trying to access it
+      if (!response.data.result) {
+        console.error('API response missing result. Full response:', response.data);
+        throw new Error('API call failed: Server returned no result');
       }
 
       return response.data.result;
