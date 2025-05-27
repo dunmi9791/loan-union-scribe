@@ -1,87 +1,63 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { odooService } from '../lib/odooService';
+import { useEffect, useState } from "react";
+import odooService from "../lib/odooService";
 
-interface OdooAuthContextType {
-  isAuthenticated: boolean;
-  user: any | null;
-  login: (username: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  loading: boolean;
-  error: string | null;
+// Define the shape of the user session
+interface OdooSession {
+  uid: number;
+  name: string;
+  session_id: string;
+  // Add more fields as needed from the Odoo session result
 }
 
-const OdooAuthContext = createContext<OdooAuthContextType | undefined>(undefined);
+export function useOdooAuth() {
+  const [user, setUser] = useState<OdooSession | null>(null);
 
-export const OdooAuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [user, setUser] = useState<any | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Check if user is already authenticated on component mount
+  // Load from localStorage on mount
   useEffect(() => {
-    const checkAuth = () => {
-      const isAuth = odooService.isAuthenticated();
-      setIsAuthenticated(isAuth);
-      if (isAuth) {
-        setUser(odooService.getSession());
-      }
-    };
-    
-    checkAuth();
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      setUser(JSON.parse(stored));
+    }
   }, []);
 
-  const login = async (username: string, password: string) => {
-    setLoading(true);
-    setError(null);
-    
+  // Login handler
+  const login = async ({
+    username,
+    password,
+  }: {
+    username: string;
+    password: string;
+  }) => {
     try {
-      const session = await odooService.login(username, password);
-      setIsAuthenticated(true);
-      setUser(session);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
-      setIsAuthenticated(false);
-      setUser(null);
-    } finally {
-      setLoading(false);
+      const result = await odooService.login(username, password);
+      if (result && result.uid) {
+        setUser(result);
+        localStorage.setItem("user", JSON.stringify(result));
+        return { success: true };
+      } else {
+        return { success: false, message: "Login failed" };
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      return { success: false, message: "Error occurred" };
     }
   };
 
+  // Logout handler
   const logout = async () => {
-    setLoading(true);
-    
     try {
       await odooService.logout();
-      setIsAuthenticated(false);
-      setUser(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Logout failed');
+    } catch (e) {
+      console.warn("Remote logout failed, clearing local session");
     } finally {
-      setLoading(false);
+      setUser(null);
+      localStorage.removeItem("user");
     }
   };
 
-  return (
-    <OdooAuthContext.Provider
-      value={{
-        isAuthenticated,
-        user,
-        login,
-        logout,
-        loading,
-        error
-      }}
-    >
-      {children}
-    </OdooAuthContext.Provider>
-  );
-};
-
-export const useOdooAuth = () => {
-  const context = useContext(OdooAuthContext);
-  if (context === undefined) {
-    throw new Error('useOdooAuth must be used within an OdooAuthProvider');
-  }
-  return context;
-};
+  return {
+    user,
+    login,
+    logout,
+  };
+}

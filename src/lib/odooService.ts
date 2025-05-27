@@ -1,53 +1,43 @@
-import axios from 'axios';
+import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_ODOO_URL;
+// ✅ Hardcoded Odoo configuration
+const ODOO_URL = "https://ranchi.secteurnetworks.com";
+const ODOO_DB = "ranchi";
 
-interface LoginParams {
-  db: string;
-  login: string;
-  password: string;
+/**
+ * Logs in to Odoo using provided credentials.
+ * @param username The Odoo login/username
+ * @param password The Odoo password
+ * @returns Odoo session result or throws error
+ */
+async function login(username: string, password: string) {
+  const response = await axios.post(`${ODOO_URL}/web/session/authenticate`, {
+    jsonrpc: "2.0",
+    method: "call",
+    params: {
+      db: ODOO_DB,
+      login: username,
+      password,
+    },
+  });
+
+  return response.data.result; // contains uid, name, session_id etc.
 }
 
-interface LoginResponse {
-  uid: number;
-  session_id: string;
-  company_id: [number, string];
-  user_context: Record<string, any>;
-  name: string;
-  username: string;
-  is_system: boolean;
-  is_admin: boolean;
-  user_id: number;
+/**
+ * Logs out from Odoo (optional based on frontend state)
+ */
+async function logout() {
+  await axios.post(`${ODOO_URL}/web/session/destroy`, {
+    jsonrpc: "2.0",
+    method: "call",
+    params: {},
+  });
 }
 
-export async function loginToOdoo({ db, login, password }: LoginParams): Promise<LoginResponse> {
-  if (!BASE_URL) {
-    throw new Error('VITE_ODOO_URL is not defined in your environment variables.');
-  }
+const odooService = {
+  login,
+  logout,
+};
 
-  const url = `${BASE_URL}/web/session/authenticate`;
-
-  const payload = {
-    jsonrpc: '2.0',
-    method: 'call',
-    params: { db, login, password }
-  };
-
-  try {
-    const response = await axios.post(url, payload, {
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      withCredentials: true
-    });
-
-    if (response.data.error) {
-      throw new Error(response.data.error.data.message || 'Authentication failed.');
-    }
-
-    return response.data.result;
-  } catch (error: any) {
-    console.error('Login to Odoo failed:', error);
-    throw new Error('Authentication failed: ' + (error.message || 'Unknown error'));
-  }
-}
+export default odooService;
