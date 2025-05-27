@@ -13,7 +13,7 @@ const OdooLogin: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login(username, password);
+    await login({ username, password });
   };
 
   return (
@@ -47,14 +47,14 @@ const OdooLogin: React.FC = () => {
                   required
                 />
               </div>
-              
+
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
             </div>
-            
+
             <Button className="w-full mt-4" type="submit" disabled={loading}>
               {loading ? 'Logging in...' : 'Login'}
             </Button>

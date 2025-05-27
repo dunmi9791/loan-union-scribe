@@ -1,8 +1,26 @@
 import axios from "axios";
 
-// ✅ Hardcoded Odoo configuration
-const ODOO_URL = "https://ranchi.secteurnetworks.com";
-const ODOO_DB = "ranchi";
+// Get environment variables with fallbacks
+const getEnv = (key: string, fallback: string): string => {
+  // Try to get from window.ENV (for production builds)
+  if (window.ENV && window.ENV[key]) {
+    return window.ENV[key];
+  }
+
+  // Try to get from import.meta.env (for development)
+  // @ts-ignore - Vite specific
+  if (import.meta.env && import.meta.env[key]) {
+    // @ts-ignore - Vite specific
+    return import.meta.env[key];
+  }
+
+  // Fallback value
+  return fallback;
+};
+
+// Get Odoo configuration from environment variables
+const ODOO_URL = getEnv("VITE_ODOO_URL", "https://ranchi.secteurnetworks.com");
+const ODOO_DB = getEnv("VITE_ODOO_DB", "ranchi");
 
 /**
  * Logs in to Odoo using provided credentials.
