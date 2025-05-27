@@ -20,7 +20,7 @@ const OdooLogin: React.FC = () => {
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <Card className="w-[350px]">
         <CardHeader>
-          <CardTitle>Login to Odoo</CardTitle>
+          <CardTitle>Login to Ranchi</CardTitle>
           <CardDescription>Enter your Odoo credentials to continue</CardDescription>
         </CardHeader>
         <CardContent>
