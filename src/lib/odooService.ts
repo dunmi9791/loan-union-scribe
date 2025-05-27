@@ -37,8 +37,15 @@ class OdooService {
         throw new Error(response.data.error.data.message || 'Authentication failed');
       }
 
+      // Check if result exists before trying to access its properties
+      if (!response.data.result) {
+        console.error('Authentication response missing result:', response.data);
+        throw new Error('Authentication failed: Invalid response format');
+      }
+  
       if (!response.data.result.uid) {
-        throw new Error('Authentication failed');
+        console.error('Authentication response missing uid:', response.data.result);
+        throw new Error('Authentication failed: User ID not found');
       }
 
       this.session = {
