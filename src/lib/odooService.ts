@@ -19,8 +19,8 @@ const getEnv = (key: string, fallback: string): string => {
 };
 
 // Get Odoo configuration from environment variables
-const ODOO_URL = getEnv("VITE_ODOO_URL", "https://ranchi.secteurnetworks.com");
-const ODOO_DB = getEnv("VITE_ODOO_DB", "ranchi");
+const ODOO_URL =  "https://ranchi.secteurnetworks.com"
+const ODOO_DB = "ranchi"
 
 /**
  * Logs in to Odoo using provided credentials.
