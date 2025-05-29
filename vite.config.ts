@@ -23,7 +23,8 @@ export default defineConfig(({ mode }) => {
         '/web': {
           target: env.VITE_ODOO_URL, // Your actual Odoo server URL from .env
           changeOrigin: true, // Recommended for most setups
-          secure: false, // Set to true if your Odoo server uses HTTPS and has a valid certificate
+          secure: false,
+          rewrite: (path) => path,// Set to true if your Odoo server uses HTTPS and has a valid certificate
           // You might need to rewrite the path if VITE_ODOO_URL already contains a path
           // or if you want to remove the proxy prefix before forwarding.
           // For /web, typically no rewrite is needed if VITE_ODOO_URL is just the base Odoo URL.

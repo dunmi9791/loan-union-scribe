@@ -19,8 +19,8 @@ const getEnv = (key: string, fallback: string): string => {
 };
 
 // Get Odoo configuration from environment variables
-const ODOO_URL =  "https://ranchi.secteurnetworks.com"
-const ODOO_DB = "ranchi"
+const ODOO_URL =  "/web";
+const ODOO_DB = "ranchi";
 
 /**
  * Logs in to Odoo using provided credentials.
@@ -29,7 +29,7 @@ const ODOO_DB = "ranchi"
  * @returns Odoo session result or throws error
  */
 async function login(username: string, password: string) {
-  const response = await axios.post(`${ODOO_URL}/web/session/authenticate`, {
+  const response = await axios.post(`${ODOO_URL}/session/authenticate`, {
     jsonrpc: "2.0",
     method: "call",
     params: {

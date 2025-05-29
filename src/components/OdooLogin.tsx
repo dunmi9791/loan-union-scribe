@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useOdooAuth } from '../hooks/useOdooAuth';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -10,10 +11,14 @@ const OdooLogin: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { login, loading, error } = useOdooAuth();
+  const navigate = useNavigate(); // ✅ add router navigation
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login({ username, password });
+    const result = await login({ username, password });
+    if (result.success) {
+      navigate("/dashboard"); // ✅ redirect on success
+    }
   };
 
   return (
@@ -28,9 +33,9 @@ const OdooLogin: React.FC = () => {
             <div className="grid w-full items-center gap-4">
               <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="username">Username</Label>
-                <Input 
-                  id="username" 
-                  placeholder="Enter your username" 
+                <Input
+                  id="username"
+                  placeholder="Enter your username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -38,10 +43,10 @@ const OdooLogin: React.FC = () => {
               </div>
               <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  placeholder="Enter your password" 
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
