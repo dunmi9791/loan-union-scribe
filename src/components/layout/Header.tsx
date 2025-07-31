@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Bell, Search } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 interface HeaderProps {
   title: string;
@@ -9,10 +10,13 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ title }) => {
   return (
     <header className="bg-white border-b border-gray-200 p-4 flex justify-between items-center">
-      <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
+      <div className="flex items-center">
+        <SidebarTrigger className="mr-4 md:hidden" />
+        <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
+      </div>
       
       <div className="flex items-center space-x-4">
-        <div className="relative">
+        <div className="relative hidden sm:block">
           <input
             type="text"
             placeholder="Search..."

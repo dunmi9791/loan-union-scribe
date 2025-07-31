@@ -1,5 +1,5 @@
 
-import { Member, Loan, Installment, Collector, CollectionSummary, Union } from "../types";
+import { Member, Loan, Installment, Collector, CollectionSummary, Union } from "../types/index";
 
 // Helper function to generate random dates
 const randomDate = (start: Date, end: Date) => {

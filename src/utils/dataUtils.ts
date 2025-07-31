@@ -1,6 +1,6 @@
 
 import { members, loans, installments, collectors, collectionSummary, unions } from "../data/mockData";
-import { Member, Loan, Installment, Collector, Union } from "../types";
+import { Member, Loan, Installment, Collector, Union } from "../types/index";
 
 // Union utilities
 export const getAllUnions = (): Union[] => unions;
