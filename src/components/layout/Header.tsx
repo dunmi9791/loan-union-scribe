@@ -11,7 +11,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
   return (
     <header className="bg-white border-b border-gray-200 p-4 flex justify-between items-center">
       <div className="flex items-center">
-        <SidebarTrigger className="mr-4 md:hidden" />
+        <SidebarTrigger className="mr-4" />
         <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
       </div>
       
