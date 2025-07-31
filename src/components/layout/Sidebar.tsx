@@ -23,7 +23,8 @@ import {
 } from "@/components/ui/sidebar";
 
 const AppSidebar = () => {
-  const { state } = useSidebar();
+  const sidebarContext = useSidebar();
+  const { state, open, isMobile } = sidebarContext;
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useOdooAuth();
@@ -59,8 +60,8 @@ const AppSidebar = () => {
     isActive ? "bg-loan-accent text-loan-primary font-medium" : "hover:bg-loan-accent/50";
 
   return (
-    <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
-      <SidebarContent className="bg-white border-r border-gray-200">
+    <Sidebar collapsible="icon">
+      <SidebarContent>
         <div className="p-4 border-b border-gray-200">
           {!collapsed && (
             <>
@@ -77,9 +78,17 @@ const AppSidebar = () => {
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.name}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.path} end className={getNavCls}>
+                    <NavLink 
+                      to={item.path} 
+                      end 
+                      className={({ isActive }) => 
+                        isActive 
+                          ? "bg-loan-accent text-loan-primary font-medium" 
+                          : "hover:bg-loan-accent/50"
+                      }
+                    >
                       <item.icon className="h-4 w-4" />
-                      {!collapsed && <span className="ml-2">{item.name}</span>}
+                      <span>{item.name}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -90,17 +99,17 @@ const AppSidebar = () => {
 
         <div className="mt-auto p-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
-            {!collapsed && (
-              <div className="flex items-center">
-                <div className="w-8 h-8 bg-loan-primary rounded-full flex items-center justify-center text-white">
-                  <span className="font-semibold">{(user as any)?.username?.substring(0, 2).toUpperCase() || 'LC'}</span>
-                </div>
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-loan-primary rounded-full flex items-center justify-center text-white">
+                <span className="font-semibold">{(user as any)?.username?.substring(0, 2).toUpperCase() || 'LC'}</span>
+              </div>
+              {!collapsed && (
                 <div className="ml-3">
                   <p className="text-sm font-medium">{(user as any)?.username || 'Loan Collector'}</p>
                   <p className="text-xs text-gray-500">Admin View</p>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
             <button 
               onClick={async () => {
                 await logout();
