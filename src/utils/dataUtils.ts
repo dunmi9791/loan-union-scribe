@@ -1,5 +1,6 @@
 
 import apiService from "../lib/apiService";
+import odooService from "../lib/odooService";
 import { Member, Loan, Installment, Collector, Union, CollectionSummary } from "../types/index";
 
 // Cache for data to avoid excessive API calls
@@ -23,7 +24,7 @@ export const clearCache = () => {
 // Union utilities
 export const getAllUnions = async (): Promise<Union[]> => {
   if (!unionsCache) {
-    unionsCache = await apiService.unions.getAll();
+    unionsCache = await odooService.fetchUnions();
   }
   return unionsCache;
 };
@@ -36,7 +37,7 @@ export const getUnionById = async (id: string): Promise<Union | undefined> => {
   }
   
   try {
-    return await apiService.unions.getById(id);
+    return await odooService.fetchUnionById(id);
   } catch (error: any) {
     if (error.name === 'PermissionError' || (error.data && error.data.code === 403)) {
       console.error(`Permission error fetching union with ID ${id}:`, error);
@@ -50,7 +51,8 @@ export const getUnionById = async (id: string): Promise<Union | undefined> => {
 
 export const getUnionMembers = async (unionId: string): Promise<Member[]> => {
   try {
-    return await apiService.unions.getMembers(unionId);
+    const members = await odooService.fetchMembers();
+    return members.filter((m) => m.unionId === unionId);
   } catch (error) {
     console.error(`Error fetching members for union with ID ${unionId}:`, error);
     return [];
@@ -59,7 +61,8 @@ export const getUnionMembers = async (unionId: string): Promise<Member[]> => {
 
 export const getUnionCollectors = async (unionId: string): Promise<Collector[]> => {
   try {
-    return await apiService.unions.getCollectors(unionId);
+    const collectors = await odooService.fetchCollectors();
+    return collectors.filter((c) => c.unionId === unionId);
   } catch (error) {
     console.error(`Error fetching collectors for union with ID ${unionId}:`, error);
     return [];
@@ -87,7 +90,7 @@ export const getMemberById = async (id: string): Promise<Member | undefined> => 
   }
   
   try {
-    return await apiService.members.getById(id);
+    return await odooService.fetchMemberById(id);
   } catch (error: any) {
     if (error.name === 'PermissionError' || (error.data && error.data.code === 403)) {
       console.error(`Permission error fetching member with ID ${id}:`, error);
