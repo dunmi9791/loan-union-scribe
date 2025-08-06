@@ -1,13 +1,59 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Card } from "@/components/ui/card";
 import { getAllUnions, formatCurrency, getUnionMembers, getUnionLeader, getUnionCollectors } from "@/utils/dataUtils";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { Building2, Users, User, Coins } from "lucide-react";
+import { Union, Member, Collector } from "@/types";
 
 const Unions = () => {
-  const unions = getAllUnions();
+  const [unions, setUnions] = useState<Union[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [details, setDetails] = useState<Record<string, { members: Member[]; collectors: Collector[]; leader?: Member }>>({});
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const data = await getAllUnions();
+        if (!isMounted) return;
+        setUnions(data);
+
+        const entries = await Promise.all(
+          data.map(async (u) => {
+            const [members, collectors, leader] = await Promise.all([
+              getUnionMembers(u.id),
+              getUnionCollectors(u.id),
+              getUnionLeader(u.id),
+            ]);
+            return [u.id, { members, collectors, leader }] as const;
+          })
+        );
+
+        if (!isMounted) return;
+        const map: Record<string, { members: Member[]; collectors: Collector[]; leader?: Member }> = {};
+        entries.forEach(([id, val]) => (map[id] = val));
+        setDetails(map);
+      } catch (err) {
+        console.error("Failed to load unions:", err);
+        setUnions([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+  if (loading) {
+    return (
+      <Layout title="Unions">
+        <div className="p-6">Loading unions...</div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Unions">
@@ -21,9 +67,10 @@ const Unions = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {unions.map((union) => {
-            const members = getUnionMembers(union.id);
-            const leader = getUnionLeader(union.id);
-            const collectors = getUnionCollectors(union.id);
+            const info = details[union.id] || { members: [], collectors: [], leader: undefined };
+            const members = info.members;
+            const leader = info.leader;
+            const collectors = info.collectors;
 
             return (
               <Card key={union.id} className="p-6">

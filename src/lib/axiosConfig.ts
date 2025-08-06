@@ -21,11 +21,13 @@ axiosInstance.interceptors.request.use(
           
           if (sessionId) {
             // Add the session ID to the request headers
-            config.headers = config.headers || {};
-            config.headers['X-Session-ID'] = sessionId;
+            if (!config.headers) {
+              config.headers = {} as any;
+            }
+            (config.headers as any)['X-Session-ID'] = sessionId;
             
             // Also set it as a cookie for backends that expect it there
-            config.headers['Cookie'] = `session_id=${sessionId}`;
+            (config.headers as any)['Cookie'] = `session_id=${sessionId}`;
           }
         }
       } catch (error) {

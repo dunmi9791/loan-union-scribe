@@ -1,18 +1,65 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Card } from "@/components/ui/card";
 import { getAllMembers, formatCurrency, getMemberLoans, getMemberUnion } from "@/utils/dataUtils";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { useNavigate } from "react-router-dom";
+import { Member, Union } from "@/types";
 
 const Members = () => {
-  const members = getAllMembers();
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loansCount, setLoansCount] = useState<Record<string, number>>({});
+  const [unionMap, setUnionMap] = useState<Record<string, Union | undefined>>({});
   const navigate = useNavigate();
   
   const getMemberLoanCount = (memberId: string) => {
-    return getMemberLoans(memberId).length;
+    return loansCount[memberId] ?? 0;
   };
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const data = await getAllMembers();
+        if (!isMounted) return;
+        setMembers(data);
+
+        const countsEntries = await Promise.all(
+          data.map(async (m) => [m.id, (await getMemberLoans(m.id)).length] as const)
+        );
+        const counts: Record<string, number> = {};
+        countsEntries.forEach(([id, len]) => (counts[id] = len));
+        if (isMounted) setLoansCount(counts);
+
+        const unionsEntries = await Promise.all(
+          data.map(async (m) => [m.id, await getMemberUnion(m.id)] as const)
+        );
+        const uMap: Record<string, Union | undefined> = {};
+        unionsEntries.forEach(([id, u]) => (uMap[id] = u));
+        if (isMounted) setUnionMap(uMap);
+      } catch (e) {
+        console.error("Failed to load members:", e);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <Layout title="Members">
+        <Card className="p-6">
+          <div>Loading members...</div>
+        </Card>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Members">
@@ -56,22 +103,22 @@ const Members = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {members.map((member) => {
-                const memberUnion = getMemberUnion(member.id);
+                const memberUnion = unionMap[member.id];
                 return (
                   <tr key={member.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-loan-accent flex items-center justify-center">
-                          <span className="font-medium text-loan-primary">
-                            {member.name.split(' ').map(n => n[0]).join('')}
-                          </span>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 rounded-full bg-loan-accent flex items-center justify-center">
+                            <span className="font-medium text-loan-primary">
+                              {member.name.split(' ').map(n => n[0]).join('')}
+                            </span>
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{member.name}</div>
+                            <div className="text-sm text-gray-500">{member.email}</div>
+                          </div>
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                          <div className="text-sm text-gray-500">{member.email}</div>
-                        </div>
-                      </div>
-                    </td>
+                      </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{memberUnion?.name}</div>
                       <div className="text-sm text-gray-500">Purse: {formatCurrency(memberUnion?.purse || 0)}</div>

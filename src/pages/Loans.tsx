@@ -1,15 +1,34 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Card } from "@/components/ui/card";
 import { getAllLoans, formatCurrency, formatDate } from "@/utils/dataUtils";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { useNavigate } from "react-router-dom";
+import { Loan } from "@/types";
 
 const Loans = () => {
-  const loans = getAllLoans();
+  const [loans, setLoans] = useState<Loan[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [filter, setFilter] = useState<"all" | "active" | "completed" | "defaulted">("all");
+  
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const data = await getAllLoans();
+        if (!isMounted) return;
+        setLoans(data);
+      } catch (e) {
+        console.error("Failed to load loans:", e);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    })();
+
+    return () => { isMounted = false; };
+  }, []);
   
   const filteredLoans = filter === "all" 
     ? loans 
@@ -18,6 +37,13 @@ const Loans = () => {
   const calculateProgress = (loan: any) => {
     return (loan.paidInstallments / loan.totalInstallments) * 100;
   };
+  if (loading) {
+    return (
+      <Layout title="Loans">
+        <Card className="p-6">Loading loans...</Card>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Loans">

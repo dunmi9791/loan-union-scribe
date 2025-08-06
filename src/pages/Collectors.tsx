@@ -1,13 +1,39 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Card } from "@/components/ui/card";
 import { getAllCollectors, formatCurrency } from "@/utils/dataUtils";
 import { useNavigate } from "react-router-dom";
+import { Collector } from "@/types";
 
 const Collectors = () => {
-  const collectors = getAllCollectors();
+  const [collectors, setCollectors] = useState<Collector[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const data = await getAllCollectors();
+        if (!isMounted) return;
+        setCollectors(data);
+      } catch (e) {
+        console.error("Failed to load collectors:", e);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    })();
+
+    return () => { isMounted = false; };
+  }, []);
+  if (loading) {
+    return (
+      <Layout title="Collectors">
+        <Card className="p-6">Loading collectors...</Card>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Collectors">
