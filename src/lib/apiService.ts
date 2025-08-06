@@ -45,8 +45,8 @@ const unionApi = {
   }): Promise<Union[]> => {
     const queryParams = buildQueryParams(options);
     const response = await axios.get(`${API_BASE_URL}/unions${queryParams}`);
-    
-    return response.data.map((union: any) => ({
+    const data = response.data?.result ?? response.data;
+    return (Array.isArray(data) ? data : [data]).map((union: any) => ({
       id: String(union.id),
       name: union.name,
       leaderId: union.leaderId != null ? String(union.leaderId) : "",
@@ -60,7 +60,8 @@ const unionApi = {
   // Get a single union by ID
   getById: async (unionId: string): Promise<Union> => {
     const response = await axios.get(`${API_BASE_URL}/unions/${unionId}`);
-    const union = response.data;
+    const raw = response.data?.result ?? response.data;
+    const union = Array.isArray(raw) ? raw[0] : raw;
     
     return {
       id: String(union.id),
@@ -120,8 +121,9 @@ const unionApi = {
   }): Promise<Member[]> => {
     const queryParams = buildQueryParams(options);
     const response = await axios.get(`${API_BASE_URL}/unions/${unionId}/members${queryParams}`);
+    const data = response.data?.result ?? response.data;
     
-    return response.data.map((member: any) => ({
+    return (Array.isArray(data) ? data : [data]).map((member: any) => ({
       id: String(member.id ?? member.memberId),
       name: member.name,
       contactNumber: member.contactNumber,
@@ -136,16 +138,17 @@ const unionApi = {
   // Get collectors and summary stats for a union
   getCollectors: async (unionId: string): Promise<Collector[]> => {
     const response = await axios.get(`${API_BASE_URL}/unions/${unionId}/collectors`);
+    const data = response.data?.result ?? response.data;
     
-    return response.data.map((collector: any) => ({
-      id: collector.id.toString(),
+    return (Array.isArray(data) ? data : [data]).map((collector: any) => ({
+      id: collector.id != null ? String(collector.id) : "",
       name: collector.name,
       contactNumber: collector.contactNumber,
       email: collector.email,
       assignedMembers: collector.assignedMembers,
       collectionsToday: collector.collectionsToday,
       totalCollected: collector.totalCollected,
-      unionId: collector.unionId.toString()
+      unionId: collector.unionId != null ? String(collector.unionId) : String(unionId)
     }));
   }
 };
