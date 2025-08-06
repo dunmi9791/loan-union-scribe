@@ -1,9 +1,10 @@
 
 import apiService from "../lib/apiService";
-import odooService from "../lib/odooService";
+// The legacy odooService has been removed in favour of REST API calls.
 import { Member, Loan, Installment, Collector, Union, CollectionSummary } from "../types/index";
 
-// Cache for data to avoid excessive API calls
+// Cache for data to avoid excessive API calls. These caches can be
+// invalidated by calling `clearCache()` when data is updated.
 let unionsCache: Union[] | null = null;
 let membersCache: Member[] | null = null;
 let loansCache: Loan[] | null = null;
@@ -24,7 +25,12 @@ export const clearCache = () => {
 // Union utilities
 export const getAllUnions = async (): Promise<Union[]> => {
   if (!unionsCache) {
-    unionsCache = await odooService.fetchUnions();
+    try {
+      unionsCache = await apiService.unions.getAll();
+    } catch (error) {
+      console.error("Error fetching unions:", error);
+      unionsCache = [];
+    }
   }
   return unionsCache;
 };
@@ -37,7 +43,10 @@ export const getUnionById = async (id: string): Promise<Union | undefined> => {
   }
   
   try {
-    return await odooService.fetchUnionById(id);
+    const union = await apiService.unions.getById(id);
+    // Cache the union in case it's requested again
+    unionsCache = unionsCache ? [...unionsCache, union] : [union];
+    return union;
   } catch (error: any) {
     if (error.name === 'PermissionError' || (error.data && error.data.code === 403)) {
       console.error(`Permission error fetching union with ID ${id}:`, error);
@@ -51,8 +60,8 @@ export const getUnionById = async (id: string): Promise<Union | undefined> => {
 
 export const getUnionMembers = async (unionId: string): Promise<Member[]> => {
   try {
-    const members = await odooService.fetchMembers();
-    return members.filter((m) => m.unionId === unionId);
+    // Use REST endpoint to fetch members belonging to a specific union
+    return await apiService.unions.getMembers(unionId);
   } catch (error) {
     console.error(`Error fetching members for union with ID ${unionId}:`, error);
     return [];
@@ -61,8 +70,8 @@ export const getUnionMembers = async (unionId: string): Promise<Member[]> => {
 
 export const getUnionCollectors = async (unionId: string): Promise<Collector[]> => {
   try {
-    const collectors = await odooService.fetchCollectors();
-    return collectors.filter((c) => c.unionId === unionId);
+    // Use REST endpoint to fetch collectors belonging to a specific union
+    return await apiService.unions.getCollectors(unionId);
   } catch (error) {
     console.error(`Error fetching collectors for union with ID ${unionId}:`, error);
     return [];
@@ -77,7 +86,12 @@ export const getUnionLeader = async (unionId: string): Promise<Member | undefine
 // Member utilities
 export const getAllMembers = async (): Promise<Member[]> => {
   if (!membersCache) {
-    membersCache = await apiService.members.getAll();
+    try {
+      membersCache = await apiService.members.getAll();
+    } catch (error) {
+      console.error("Error fetching members:", error);
+      membersCache = [];
+    }
   }
   return membersCache;
 };
@@ -90,7 +104,10 @@ export const getMemberById = async (id: string): Promise<Member | undefined> => 
   }
   
   try {
-    return await odooService.fetchMemberById(id);
+    const member = await apiService.members.getById(id);
+    // Cache the member for future lookups
+    membersCache = membersCache ? [...membersCache, member] : [member];
+    return member;
   } catch (error: any) {
     if (error.name === 'PermissionError' || (error.data && error.data.code === 403)) {
       console.error(`Permission error fetching member with ID ${id}:`, error);
