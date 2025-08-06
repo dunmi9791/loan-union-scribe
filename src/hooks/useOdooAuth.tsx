@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
-import odooService from "../lib/odooService";
+import apiService from "../lib/apiService";
 
 // Define the shape of the user session
 interface OdooSession {
@@ -65,7 +65,7 @@ export function OdooAuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
 
-      const result = await odooService.login(username, password);
+      const result = await apiService.auth.login(username, password);
 
       if (result && result.uid) {
         setUser(result);
@@ -87,7 +87,13 @@ export function OdooAuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error: any) {
       console.error("Login error:", error);
-      const errorMessage = error?.message || "Authentication failed: Server error";
+      let errorMessage = error?.message || "Authentication failed: Server error";
+      
+      // Check if this is a permission error
+      if (error.name === 'PermissionError' || (error.data && error.data.code === 403)) {
+        errorMessage = "Permission denied: You don't have access to this resource";
+      }
+      
       setError(errorMessage);
       return { success: false, message: errorMessage };
     } finally {
@@ -98,7 +104,7 @@ export function OdooAuthProvider({ children }: { children: ReactNode }) {
   // Logout handler
   const logout = async () => {
     try {
-      await odooService.logout();
+      await apiService.auth.logout();
     } catch (e) {
       console.warn("Remote logout failed, clearing local session");
     } finally {

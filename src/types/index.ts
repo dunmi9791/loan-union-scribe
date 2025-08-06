@@ -40,6 +40,9 @@ export interface Installment {
   paidDate: Date | null;
   status: "paid" | "pending" | "overdue";
   collectorId: string;
+  // Additional string date properties for display
+  dueDateStr?: string;
+  paidDateStr?: string | null;
 }
 
 export interface Collector {

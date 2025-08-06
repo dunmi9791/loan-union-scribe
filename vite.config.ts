@@ -49,6 +49,40 @@ export default defineConfig(({ mode }) => {
           target: env.VITE_ODOO_URL,
           changeOrigin: true,
           secure: false,
+        },
+        // Add proxy for API endpoints used by the dashboard
+        '/api': {
+          target: env.VITE_ODOO_URL,
+          changeOrigin: true,
+          secure: false,
+          configure: (proxy, _options) => {
+            proxy.on('error', (err, _req, _res) => {
+              console.log('API proxy error', err);
+            });
+            proxy.on('proxyReq', (proxyReq, req, _res) => {
+              console.log('Sending API Request to Target:', proxyReq.method, proxyReq.host, proxyReq.path);
+            });
+            proxy.on('proxyRes', (proxyRes, req, _res) => {
+              console.log('Received API Response from Target:', proxyRes.statusCode, req.url);
+            });
+          }
+        },
+        // Add proxy for installments endpoints
+        '/installments': {
+          target: env.VITE_ODOO_URL,
+          changeOrigin: true,
+          secure: false,
+          configure: (proxy, _options) => {
+            proxy.on('error', (err, _req, _res) => {
+              console.log('Installments proxy error', err);
+            });
+            proxy.on('proxyReq', (proxyReq, req, _res) => {
+              console.log('Sending Installments Request to Target:', proxyReq.method, proxyReq.host, proxyReq.path);
+            });
+            proxy.on('proxyRes', (proxyRes, req, _res) => {
+              console.log('Received Installments Response from Target:', proxyRes.statusCode, req.url);
+            });
+          }
         }
         // Add other Odoo specific paths if needed, e.g., /jsonrpc if you ever call it directly without /web
       },

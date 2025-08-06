@@ -1,20 +1,63 @@
-
-import React from "react";
-import { getCollectionSummary, formatCurrency, getOverdueInstallments, getPendingInstallments } from "@/utils/dataUtils";
-import Layout from "@/components/layout/Layout";
-import StatCard from "@/components/ui/StatCard";
+import React, { useState, useEffect } from "react";
+import { getCollectionSummary, formatCurrency, getOverdueInstallments, getPendingInstallments } from "../utils/dataUtils";
+import Layout from "../components/layout/Layout";
+import StatCard from "../components/ui/StatCard";
 import { Coins, Users, Calendar, FileText } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Card } from "../components/ui/card";
 import { useNavigate } from "react-router-dom";
-import StatusBadge from "@/components/ui/StatusBadge";
+import StatusBadge from "../components/ui/StatusBadge";
+import { CollectionSummary, Installment } from "../types";
 
 const Dashboard = () => {
-  const summary = getCollectionSummary();
-  const overdueInstallments = getOverdueInstallments();
-  const pendingInstallments = getPendingInstallments().slice(0, 5); // Get only 5 for display
+  const [summary, setSummary] = useState<CollectionSummary>({
+    totalLoans: 0,
+    activeLoans: 0,
+    completedLoans: 0,
+    defaultedLoans: 0,
+    totalAmount: 0,
+    totalCollected: 0,
+    pendingAmount: 0
+  });
+  const [overdueInstallments, setOverdueInstallments] = useState<Installment[]>([]);
+  const [pendingInstallments, setPendingInstallments] = useState<Installment[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   
-  const collectionProgress = (summary.totalCollected / summary.totalAmount) * 100;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const summaryData = await getCollectionSummary();
+        setSummary(summaryData);
+        
+        const overdueData = await getOverdueInstallments();
+        setOverdueInstallments(overdueData);
+        
+        const pendingData = await getPendingInstallments();
+        setPendingInstallments(pendingData.slice(0, 5)); // Get only 5 for display
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+  
+  const collectionProgress = summary.totalAmount > 0 
+    ? (summary.totalCollected / summary.totalAmount) * 100
+    : 0;
+  
+  if (loading) {
+    return (
+      <Layout title="Dashboard">
+        <div className="text-center py-10">
+          <p>Loading dashboard data...</p>
+        </div>
+      </Layout>
+    );
+  }
   
   return (
     <Layout title="Dashboard">
@@ -61,44 +104,50 @@ const Dashboard = () => {
             </button>
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Due Date
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Member
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {pendingInstallments.map((installment) => (
-                  <tr key={installment.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {new Date(installment.dueDate).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      Member {installment.memberId.substring(0, 4)}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap font-medium">
-                      {formatCurrency(installment.amount)}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <StatusBadge status="pending" />
-                    </td>
+          {pendingInstallments.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Due Date
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Member
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amount
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {pendingInstallments.map((installment) => (
+                    <tr key={installment.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {installment.dueDateStr || new Date(installment.dueDate).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        Member {installment.memberId.substring(0, 4)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap font-medium">
+                        {formatCurrency(installment.amount)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <StatusBadge status="pending" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No pending installments</p>
+            </div>
+          )}
         </Card>
 
         <Card className="p-6">
@@ -133,15 +182,17 @@ const Dashboard = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {overdueInstallments.slice(0, 5).map((installment) => {
+                    const dueDate = new Date(installment.dueDate);
+                    
                     const daysOverdue = Math.floor(
-                      (new Date().getTime() - new Date(installment.dueDate).getTime()) / 
+                      (new Date().getTime() - dueDate.getTime()) / 
                       (1000 * 3600 * 24)
                     );
                     
                     return (
                       <tr key={installment.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 whitespace-nowrap">
-                          {new Date(installment.dueDate).toLocaleDateString()}
+                          {installment.dueDateStr || new Date(installment.dueDate).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           Member {installment.memberId.substring(0, 4)}

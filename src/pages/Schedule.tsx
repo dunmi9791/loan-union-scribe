@@ -1,39 +1,83 @@
-
-import React, { useState } from "react";
-import Layout from "@/components/layout/Layout";
-import { Card } from "@/components/ui/card";
-import { getAllInstallments, formatCurrency } from "@/utils/dataUtils";
-import StatusBadge from "@/components/ui/StatusBadge";
+import React, { useState, useEffect } from "react";
+import Layout from "../components/layout/Layout";
+import { Card } from "../components/ui/card";
+import { getAllInstallments, formatCurrency } from "../utils/dataUtils";
+import StatusBadge from "../components/ui/StatusBadge";
+import { Installment } from "../types";
 
 const Schedule = () => {
-  const allInstallments = getAllInstallments();
+  const [allInstallments, setAllInstallments] = useState<Installment[]>([]);
   const [filter, setFilter] = useState<"all" | "pending" | "paid" | "overdue">("all");
+  const [loading, setLoading] = useState(true);
+  const [groupedInstallments, setGroupedInstallments] = useState<Record<string, Installment[]>>({});
+  const [sortedMonths, setSortedMonths] = useState<string[]>([]);
   
-  // Group installments by month
-  const groupedInstallments: Record<string, typeof allInstallments> = {};
+  // Fetch installments data
+  useEffect(() => {
+    const fetchInstallments = async () => {
+      try {
+        setLoading(true);
+        const installments = await getAllInstallments();
+        setAllInstallments(installments);
+      } catch (error) {
+        console.error("Error fetching installments:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchInstallments();
+  }, []);
   
-  allInstallments.forEach(installment => {
-    // Filter by status if needed
-    if (filter !== "all" && installment.status !== filter) return;
+  // Process and group installments when data or filter changes
+  useEffect(() => {
+    const grouped: Record<string, Installment[]> = {};
     
-    const date = new Date(installment.dueDate);
-    const monthYear = `${date.getFullYear()}-${date.getMonth() + 1}`;
+    allInstallments.forEach(installment => {
+      // Filter by status if needed
+      if (filter !== "all" && installment.status !== filter) return;
+      
+      // Handle both string date formats and Date objects
+      let monthYear;
+      
+      if (installment.dueDateStr) {
+        // Parse the date string in format YYYY-MM-DD
+        const [year, month] = installment.dueDateStr.split('-').map(Number);
+        monthYear = `${year}-${month}`;
+      } else {
+        const date = new Date(installment.dueDate);
+        monthYear = `${date.getFullYear()}-${date.getMonth() + 1}`;
+      }
+      
+      if (!grouped[monthYear]) {
+        grouped[monthYear] = [];
+      }
+      
+      grouped[monthYear].push(installment);
+    });
     
-    if (!groupedInstallments[monthYear]) {
-      groupedInstallments[monthYear] = [];
-    }
+    setGroupedInstallments(grouped);
     
-    groupedInstallments[monthYear].push(installment);
-  });
-
-  // Sort months in chronological order
-  const sortedMonths = Object.keys(groupedInstallments).sort();
+    // Sort months in chronological order
+    const sorted = Object.keys(grouped).sort();
+    setSortedMonths(sorted);
+  }, [allInstallments, filter]);
 
   // Function to get the month name
   const getMonthName = (monthYear: string) => {
     const [year, month] = monthYear.split('-').map(Number);
     return new Date(year, month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
+
+  if (loading) {
+    return (
+      <Layout title="Collection Schedule">
+        <div className="text-center py-10">
+          <p>Loading schedule data...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Collection Schedule">
@@ -122,7 +166,7 @@ const Schedule = () => {
                   {groupedInstallments[month].map((installment) => (
                     <tr key={installment.id} className="hover:bg-gray-50">
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(installment.dueDate).toLocaleDateString()}
+                        {installment.dueDateStr || new Date(installment.dueDate).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm">
                         <div className="font-medium text-gray-900">Member {installment.memberId.substring(0, 4)}</div>
@@ -138,7 +182,7 @@ const Schedule = () => {
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                         {installment.paidDate 
-                          ? new Date(installment.paidDate).toLocaleDateString() 
+                          ? (installment.paidDateStr || new Date(installment.paidDate).toLocaleDateString())
                           : '-'
                         }
                       </td>
