@@ -47,12 +47,12 @@ const unionApi = {
     const response = await axios.get(`${API_BASE_URL}/unions${queryParams}`);
     
     return response.data.map((union: any) => ({
-      id: union.id.toString(),
+      id: String(union.id),
       name: union.name,
-      leaderId: union.leaderId.toString(),
+      leaderId: union.leaderId != null ? String(union.leaderId) : "",
       purse: union.purse,
       memberCount: union.memberCount,
-      createdDate: new Date(union.createdDate),
+      createdDate: union.createdDate ? new Date(union.createdDate) : new Date(),
       status: union.status
     }));
   },
@@ -63,12 +63,12 @@ const unionApi = {
     const union = response.data;
     
     return {
-      id: union.id.toString(),
+      id: String(union.id),
       name: union.name,
-      leaderId: union.leaderId.toString(),
+      leaderId: union.leaderId != null ? String(union.leaderId) : "",
       purse: union.purse,
       memberCount: union.memberCount,
-      createdDate: new Date(union.createdDate),
+      createdDate: union.createdDate ? new Date(union.createdDate) : new Date(),
       status: union.status
     };
   },
@@ -122,14 +122,14 @@ const unionApi = {
     const response = await axios.get(`${API_BASE_URL}/unions/${unionId}/members${queryParams}`);
     
     return response.data.map((member: any) => ({
-      id: member.id.toString(),
+      id: String(member.id ?? member.memberId),
       name: member.name,
       contactNumber: member.contactNumber,
       email: member.email,
-      joinDate: new Date(member.joinDate),
+      joinDate: member.joinDate ? new Date(member.joinDate) : new Date(),
       status: member.status,
       balance: member.balance,
-      unionId: member.unionId.toString()
+      unionId: String(member.unionId ?? unionId)
     }));
   },
   
@@ -266,14 +266,14 @@ const memberApi = {
     const response = await axios.get(`${API_BASE_URL}/members/${memberId}/installments${queryParams}`);
     
     return response.data.map((installment: any) => ({
-      id: installment.id.toString(),
-      loanId: installment.loanId.toString(),
-      memberId: installment.memberId.toString(),
+      id: String(installment.id),
+      loanId: String(installment.loanId),
+      memberId: String(installment.memberId),
       amount: installment.amount,
       dueDate: new Date(installment.dueDate),
       paidDate: installment.paidDate ? new Date(installment.paidDate) : null,
       status: installment.status,
-      collectorId: installment.collectorId.toString()
+      collectorId: installment.collectorId != null ? String(installment.collectorId) : ""
     }));
   }
 };
@@ -371,14 +371,14 @@ const loanApi = {
     const response = await axios.get(`${API_BASE_URL}/loans/${loanId}/installments${queryParams}`);
     
     return response.data.map((installment: any) => ({
-      id: installment.id.toString(),
-      loanId: installment.loanId.toString(),
-      memberId: installment.memberId.toString(),
+      id: String(installment.id),
+      loanId: String(installment.loanId),
+      memberId: String(installment.memberId),
       amount: installment.amount,
       dueDate: new Date(installment.dueDate),
       paidDate: installment.paidDate ? new Date(installment.paidDate) : null,
       status: installment.status,
-      collectorId: installment.collectorId.toString()
+      collectorId: installment.collectorId != null ? String(installment.collectorId) : ""
     }));
   }
 };
@@ -397,14 +397,14 @@ const installmentApi = {
     const response = await axios.get(`${API_BASE_URL}/installments${queryParams}`);
     
     return response.data.map((installment: any) => ({
-      id: installment.id.toString(),
-      loanId: installment.loanId.toString(),
-      memberId: installment.memberId.toString(),
+      id: String(installment.id),
+      loanId: String(installment.loanId),
+      memberId: String(installment.memberId),
       amount: installment.amount,
       dueDate: new Date(installment.dueDate),
       paidDate: installment.paidDate ? new Date(installment.paidDate) : null,
       status: installment.status,
-      collectorId: installment.collectorId.toString()
+      collectorId: installment.collectorId != null ? String(installment.collectorId) : ""
     }));
   },
   
@@ -414,14 +414,14 @@ const installmentApi = {
     const installment = response.data;
     
     return {
-      id: installment.id.toString(),
-      loanId: installment.loanId.toString(),
-      memberId: installment.memberId.toString(),
+      id: String(installment.id),
+      loanId: String(installment.loanId),
+      memberId: String(installment.memberId),
       amount: installment.amount,
       dueDate: new Date(installment.dueDate),
       paidDate: installment.paidDate ? new Date(installment.paidDate) : null,
       status: installment.status,
-      collectorId: installment.collectorId.toString()
+      collectorId: installment.collectorId != null ? String(installment.collectorId) : ""
     };
   },
   
@@ -431,14 +431,14 @@ const installmentApi = {
     const newInstallment = response.data;
     
     return {
-      id: newInstallment.id.toString(),
-      loanId: newInstallment.loanId.toString(),
-      memberId: newInstallment.memberId.toString(),
+      id: String(newInstallment.id),
+      loanId: String(newInstallment.loanId),
+      memberId: String(newInstallment.memberId),
       amount: newInstallment.amount,
       dueDate: new Date(newInstallment.dueDate),
       paidDate: newInstallment.paidDate ? new Date(newInstallment.paidDate) : null,
       status: newInstallment.status,
-      collectorId: newInstallment.collectorId.toString()
+      collectorId: newInstallment.collectorId != null ? String(newInstallment.collectorId) : ""
     };
   },
   
@@ -448,14 +448,14 @@ const installmentApi = {
     const updatedInstallment = response.data;
     
     return {
-      id: updatedInstallment.id.toString(),
-      loanId: updatedInstallment.loanId.toString(),
-      memberId: updatedInstallment.memberId.toString(),
+      id: String(updatedInstallment.id),
+      loanId: String(updatedInstallment.loanId),
+      memberId: String(updatedInstallment.memberId),
       amount: updatedInstallment.amount,
       dueDate: new Date(updatedInstallment.dueDate),
       paidDate: updatedInstallment.paidDate ? new Date(updatedInstallment.paidDate) : null,
       status: updatedInstallment.status,
-      collectorId: updatedInstallment.collectorId.toString()
+      collectorId: updatedInstallment.collectorId != null ? String(updatedInstallment.collectorId) : ""
     };
   },
   
@@ -473,17 +473,17 @@ const installmentApi = {
     filter?: Record<string, string>;
   }): Promise<Installment[]> => {
     const queryParams = buildQueryParams(options);
-    const response = await axios.get(`/installments/overdue${queryParams}`);
+    const response = await axios.get(`${API_BASE_URL}/installments/overdue${queryParams}`);
     
     return response.data.map((installment: any) => ({
-      id: installment.id.toString(),
-      loanId: installment.loanId.toString(),
-      memberId: installment.memberId.toString(),
+      id: String(installment.id),
+      loanId: String(installment.loanId),
+      memberId: String(installment.memberId),
       amount: installment.amount,
       dueDate: new Date(installment.dueDate),
       paidDate: installment.paidDate ? new Date(installment.paidDate) : null,
       status: installment.status,
-      collectorId: installment.collectorId.toString()
+      collectorId: installment.collectorId != null ? String(installment.collectorId) : ""
     }));
   },
   
@@ -496,17 +496,17 @@ const installmentApi = {
     filter?: Record<string, string>;
   }): Promise<Installment[]> => {
     const queryParams = buildQueryParams(options);
-    const response = await axios.get(`/installments/pending${queryParams}`);
+    const response = await axios.get(`${API_BASE_URL}/installments/pending${queryParams}`);
     
     return response.data.map((installment: any) => ({
-      id: installment.id.toString(),
-      loanId: installment.loanId.toString(),
-      memberId: installment.memberId.toString(),
+      id: String(installment.id),
+      loanId: String(installment.loanId),
+      memberId: String(installment.memberId),
       amount: installment.amount,
       dueDate: new Date(installment.dueDate),
       paidDate: installment.paidDate ? new Date(installment.paidDate) : null,
       status: installment.status,
-      collectorId: installment.collectorId.toString()
+      collectorId: installment.collectorId != null ? String(installment.collectorId) : ""
     }));
   }
 };
@@ -522,7 +522,7 @@ const collectorApi = {
     filter?: Record<string, string>;
   }): Promise<Collector[]> => {
     const queryParams = buildQueryParams(options);
-    const response = await axios.get(`${API_BASE_URL}/collectors${queryParams}`);
+    const response = await axios.get(`/collectors${queryParams}`);
     
     return response.data.map((collector: any) => ({
       id: collector.id.toString(),
@@ -538,18 +538,19 @@ const collectorApi = {
   
   // Get a single collector by ID
   getById: async (collectorId: string): Promise<Collector> => {
-    const response = await axios.get(`${API_BASE_URL}/collectors/${collectorId}`);
-    const collector = response.data;
+    const response = await axios.get(`/collectors/${collectorId}`);
+    const raw = Array.isArray(response.data) ? response.data[0] : response.data;
+    const collector = raw || {};
     
     return {
-      id: collector.id.toString(),
+      id: String(collector.id),
       name: collector.name,
       contactNumber: collector.contactNumber,
       email: collector.email,
       assignedMembers: collector.assignedMembers,
       collectionsToday: collector.collectionsToday,
       totalCollected: collector.totalCollected,
-      unionId: collector.unionId.toString()
+      unionId: collector.unionId != null ? String(collector.unionId) : ""
     };
   },
   
@@ -562,17 +563,17 @@ const collectorApi = {
     filter?: Record<string, string>;
   }): Promise<Installment[]> => {
     const queryParams = buildQueryParams(options);
-    const response = await axios.get(`${API_BASE_URL}/collectors/${collectorId}/installments${queryParams}`);
+    const response = await axios.get(`/collectors/${collectorId}/installments${queryParams}`);
     
     return response.data.map((installment: any) => ({
-      id: installment.id.toString(),
-      loanId: installment.loanId.toString(),
-      memberId: installment.memberId.toString(),
+      id: String(installment.id),
+      loanId: String(installment.loanId),
+      memberId: String(installment.memberId),
       amount: installment.amount,
       dueDate: new Date(installment.dueDate),
       paidDate: installment.paidDate ? new Date(installment.paidDate) : null,
       status: installment.status,
-      collectorId: installment.collectorId.toString()
+      collectorId: installment.collectorId != null ? String(installment.collectorId) : ""
     }));
   }
 };
