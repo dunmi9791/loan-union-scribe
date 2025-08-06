@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { getAllLoans, formatCurrency, formatDate } from "@/utils/dataUtils";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { useNavigate } from "react-router-dom";
-import { Loan } from "@/types";
+import { Loan } from "@/types/index";
 
 const Loans = () => {
   const [loans, setLoans] = useState<Loan[]>([]);

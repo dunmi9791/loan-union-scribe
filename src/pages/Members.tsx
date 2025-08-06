@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { getAllMembers, formatCurrency, getMemberLoans, getMemberUnion } from "@/utils/dataUtils";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { useNavigate } from "react-router-dom";
-import { Member, Union } from "@/types";
+import { Member, Union } from "@/types/index";
 
 const Members = () => {
   const [members, setMembers] = useState<Member[]>([]);

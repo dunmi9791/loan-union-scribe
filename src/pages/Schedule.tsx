@@ -3,7 +3,7 @@ import Layout from "../components/layout/Layout";
 import { Card } from "../components/ui/card";
 import { getAllInstallments, formatCurrency } from "../utils/dataUtils";
 import StatusBadge from "../components/ui/StatusBadge";
-import { Installment } from "../types";
+import { Installment } from "@/types/index";
 
 const Schedule = () => {
   const [allInstallments, setAllInstallments] = useState<Installment[]>([]);

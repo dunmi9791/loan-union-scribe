@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { getAllUnions, formatCurrency, getUnionMembers, getUnionLeader, getUnionCollectors } from "@/utils/dataUtils";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { Building2, Users, User, Coins } from "lucide-react";
-import { Union, Member, Collector } from "@/types";
+import { Union, Member, Collector } from "@/types/index";
 
 const Unions = () => {
   const [unions, setUnions] = useState<Union[]>([]);

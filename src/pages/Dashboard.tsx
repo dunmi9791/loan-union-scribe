@@ -6,7 +6,7 @@ import { Coins, Users, Calendar, FileText } from "lucide-react";
 import { Card } from "../components/ui/card";
 import { useNavigate } from "react-router-dom";
 import StatusBadge from "../components/ui/StatusBadge";
-import { CollectionSummary, Installment } from "../types";
+import { CollectionSummary, Installment } from "@/types/index";
 
 const Dashboard = () => {
   const [summary, setSummary] = useState<CollectionSummary>({

@@ -4,7 +4,7 @@ import Layout from "@/components/layout/Layout";
 import { Card } from "@/components/ui/card";
 import { getAllCollectors, formatCurrency } from "@/utils/dataUtils";
 import { useNavigate } from "react-router-dom";
-import { Collector } from "@/types";
+import { Collector } from "@/types/index";
 
 const Collectors = () => {
   const [collectors, setCollectors] = useState<Collector[]>([]);
