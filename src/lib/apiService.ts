@@ -33,6 +33,26 @@ const buildQueryParams = (options?: {
   return queryString ? `?${queryString}` : '';
 };
 
+/**
+ * Extract the useful payload from an axios response.
+ *
+ * Our backends sometimes wrap the data in an object under a `result` property
+ * (e.g. `{ result: [...] }`) along with other metadata such as a status code
+ * or message. In other cases the payload is returned directly as the response
+ * body. This helper centralises the logic so each API call can reliably
+ * retrieve the underlying data regardless of the response shape.
+ *
+ * @param response The axios response object
+ * @returns The extracted data payload
+ */
+const extractData = (response: any) => {
+  const data = response?.data;
+  if (data && typeof data === 'object' && 'result' in data) {
+    return (data as any).result;
+  }
+  return data;
+};
+
 // Union API endpoints
 const unionApi = {
   // Get all unions
@@ -45,7 +65,8 @@ const unionApi = {
   }): Promise<Union[]> => {
     const queryParams = buildQueryParams(options);
     const response = await axios.get(`${API_BASE_URL}/unions${queryParams}`);
-    const data = response.data?.result ?? response.data;
+    // Extract payload from response; some backends wrap results under `result`
+    const data = extractData(response);
     return (Array.isArray(data) ? data : [data]).map((union: any) => ({
       id: String(union.id),
       name: union.name,
@@ -60,7 +81,7 @@ const unionApi = {
   // Get a single union by ID
   getById: async (unionId: string): Promise<Union> => {
     const response = await axios.get(`${API_BASE_URL}/unions/${unionId}`);
-    const raw = response.data?.result ?? response.data;
+    const raw = extractData(response);
     const union = Array.isArray(raw) ? raw[0] : raw;
     
     return {
@@ -77,32 +98,36 @@ const unionApi = {
   // Create a new union
   create: async (union: Omit<Union, 'id'>): Promise<Union> => {
     const response = await axios.post(`${API_BASE_URL}/unions`, union);
-    const newUnion = response.data;
-    
+    // Some backends return the created record directly while others wrap it
+    // in an array or under a `result` property. Use the helper to normalise.
+    const payload = extractData(response);
+    const record: any = Array.isArray(payload) ? payload[0] : payload;
+
     return {
-      id: newUnion.id.toString(),
-      name: newUnion.name,
-      leaderId: newUnion.leaderId.toString(),
-      purse: newUnion.purse,
-      memberCount: newUnion.memberCount,
-      createdDate: new Date(newUnion.createdDate),
-      status: newUnion.status
+      id: record.id != null ? String(record.id) : "",
+      name: record.name,
+      leaderId: record.leaderId != null ? String(record.leaderId) : "",
+      purse: record.purse,
+      memberCount: record.memberCount,
+      createdDate: record.createdDate ? new Date(record.createdDate) : new Date(),
+      status: record.status
     };
   },
   
   // Update an existing union
   update: async (unionId: string, union: Partial<Union>): Promise<Union> => {
     const response = await axios.put(`${API_BASE_URL}/unions/${unionId}`, union);
-    const updatedUnion = response.data;
-    
+    const payload = extractData(response);
+    const record: any = Array.isArray(payload) ? payload[0] : payload;
+
     return {
-      id: updatedUnion.id.toString(),
-      name: updatedUnion.name,
-      leaderId: updatedUnion.leaderId.toString(),
-      purse: updatedUnion.purse,
-      memberCount: updatedUnion.memberCount,
-      createdDate: new Date(updatedUnion.createdDate),
-      status: updatedUnion.status
+      id: record.id != null ? String(record.id) : "",
+      name: record.name,
+      leaderId: record.leaderId != null ? String(record.leaderId) : "",
+      purse: record.purse,
+      memberCount: record.memberCount,
+      createdDate: record.createdDate ? new Date(record.createdDate) : new Date(),
+      status: record.status
     };
   },
   
@@ -121,8 +146,8 @@ const unionApi = {
   }): Promise<Member[]> => {
     const queryParams = buildQueryParams(options);
     const response = await axios.get(`${API_BASE_URL}/unions/${unionId}/members${queryParams}`);
-    const data = response.data?.result ?? response.data;
-    
+    const data = extractData(response);
+
     return (Array.isArray(data) ? data : [data]).map((member: any) => ({
       id: String(member.id ?? member.memberId),
       name: member.name,
@@ -138,8 +163,8 @@ const unionApi = {
   // Get collectors and summary stats for a union
   getCollectors: async (unionId: string): Promise<Collector[]> => {
     const response = await axios.get(`${API_BASE_URL}/unions/${unionId}/collectors`);
-    const data = response.data?.result ?? response.data;
-    
+    const data = extractData(response);
+
     return (Array.isArray(data) ? data : [data]).map((collector: any) => ({
       id: collector.id != null ? String(collector.id) : "",
       name: collector.name,
@@ -165,67 +190,71 @@ const memberApi = {
   }): Promise<Member[]> => {
     const queryParams = buildQueryParams(options);
     const response = await axios.get(`${API_BASE_URL}/members${queryParams}`);
-    
-    return response.data.map((member: any) => ({
-      id: member.id.toString(),
+    const data = extractData(response);
+
+    return (Array.isArray(data) ? data : [data]).map((member: any) => ({
+      id: String(member.id ?? member.memberId),
       name: member.name,
       contactNumber: member.contactNumber,
       email: member.email,
-      joinDate: new Date(member.joinDate),
+      joinDate: member.joinDate ? new Date(member.joinDate) : new Date(),
       status: member.status,
       balance: member.balance,
-      unionId: member.unionId.toString()
+      unionId: member.unionId != null ? String(member.unionId) : ""
     }));
   },
   
   // Get a single member by ID
   getById: async (memberId: string): Promise<Member> => {
     const response = await axios.get(`${API_BASE_URL}/members/${memberId}`);
-    const member = response.data;
-    
+    const payload = extractData(response);
+    const member = Array.isArray(payload) ? payload[0] : payload;
+
     return {
-      id: member.id.toString(),
+      id: member.id != null ? String(member.id) : "",
       name: member.name,
       contactNumber: member.contactNumber,
       email: member.email,
-      joinDate: new Date(member.joinDate),
+      joinDate: member.joinDate ? new Date(member.joinDate) : new Date(),
       status: member.status,
       balance: member.balance,
-      unionId: member.unionId.toString()
+      unionId: member.unionId != null ? String(member.unionId) : ""
     };
   },
   
   // Create a new member
   create: async (member: Omit<Member, 'id'>): Promise<Member> => {
     const response = await axios.post(`${API_BASE_URL}/members`, member);
-    const newMember = response.data;
-    
+    const payload = extractData(response);
+    const record: any = Array.isArray(payload) ? payload[0] : payload;
+
     return {
-      id: newMember.id.toString(),
-      name: newMember.name,
-      contactNumber: newMember.contactNumber,
-      email: newMember.email,
-      joinDate: new Date(newMember.joinDate),
-      status: newMember.status,
-      balance: newMember.balance,
-      unionId: newMember.unionId.toString()
+      id: record.id != null ? String(record.id) : "",
+      name: record.name,
+      contactNumber: record.contactNumber,
+      email: record.email,
+      joinDate: record.joinDate ? new Date(record.joinDate) : new Date(),
+      status: record.status,
+      balance: record.balance,
+      unionId: record.unionId != null ? String(record.unionId) : ""
     };
   },
   
   // Update an existing member
   update: async (memberId: string, member: Partial<Member>): Promise<Member> => {
     const response = await axios.put(`${API_BASE_URL}/members/${memberId}`, member);
-    const updatedMember = response.data;
-    
+    const payload = extractData(response);
+    const record: any = Array.isArray(payload) ? payload[0] : payload;
+
     return {
-      id: updatedMember.id.toString(),
-      name: updatedMember.name,
-      contactNumber: updatedMember.contactNumber,
-      email: updatedMember.email,
-      joinDate: new Date(updatedMember.joinDate),
-      status: updatedMember.status,
-      balance: updatedMember.balance,
-      unionId: updatedMember.unionId.toString()
+      id: record.id != null ? String(record.id) : "",
+      name: record.name,
+      contactNumber: record.contactNumber,
+      email: record.email,
+      joinDate: record.joinDate ? new Date(record.joinDate) : new Date(),
+      status: record.status,
+      balance: record.balance,
+      unionId: record.unionId != null ? String(record.unionId) : ""
     };
   },
   
@@ -244,15 +273,16 @@ const memberApi = {
   }): Promise<Loan[]> => {
     const queryParams = buildQueryParams(options);
     const response = await axios.get(`${API_BASE_URL}/members/${memberId}/loans${queryParams}`);
-    
-    return response.data.map((loan: any) => ({
-      id: loan.id.toString(),
-      memberId: loan.memberId.toString(),
+    const data = extractData(response);
+
+    return (Array.isArray(data) ? data : [data]).map((loan: any) => ({
+      id: String(loan.id),
+      memberId: String(loan.memberId ?? memberId),
       amount: loan.amount,
-      issueDate: new Date(loan.issueDate),
+      issueDate: loan.issueDate ? new Date(loan.issueDate) : new Date(),
       totalInstallments: loan.totalInstallments,
       paidInstallments: loan.paidInstallments,
-      nextDueDate: new Date(loan.nextDueDate),
+      nextDueDate: loan.nextDueDate ? new Date(loan.nextDueDate) : new Date(),
       status: loan.status
     }));
   },
@@ -267,13 +297,14 @@ const memberApi = {
   }): Promise<Installment[]> => {
     const queryParams = buildQueryParams(options);
     const response = await axios.get(`${API_BASE_URL}/members/${memberId}/installments${queryParams}`);
-    
-    return response.data.map((installment: any) => ({
+    const data = extractData(response);
+
+    return (Array.isArray(data) ? data : [data]).map((installment: any) => ({
       id: String(installment.id),
-      loanId: String(installment.loanId),
-      memberId: String(installment.memberId),
+      loanId: installment.loanId != null ? String(installment.loanId) : "",
+      memberId: installment.memberId != null ? String(installment.memberId) : String(memberId),
       amount: installment.amount,
-      dueDate: new Date(installment.dueDate),
+      dueDate: installment.dueDate ? new Date(installment.dueDate) : new Date(),
       paidDate: installment.paidDate ? new Date(installment.paidDate) : null,
       status: installment.status,
       collectorId: installment.collectorId != null ? String(installment.collectorId) : ""
@@ -293,15 +324,16 @@ const loanApi = {
   }): Promise<Loan[]> => {
     const queryParams = buildQueryParams(options);
     const response = await axios.get(`${API_BASE_URL}/loans${queryParams}`);
-    
-    return response.data.map((loan: any) => ({
-      id: loan.id.toString(),
-      memberId: loan.memberId.toString(),
+    const data = extractData(response);
+
+    return (Array.isArray(data) ? data : [data]).map((loan: any) => ({
+      id: String(loan.id),
+      memberId: loan.memberId != null ? String(loan.memberId) : "",
       amount: loan.amount,
-      issueDate: new Date(loan.issueDate),
+      issueDate: loan.issueDate ? new Date(loan.issueDate) : new Date(),
       totalInstallments: loan.totalInstallments,
       paidInstallments: loan.paidInstallments,
-      nextDueDate: new Date(loan.nextDueDate),
+      nextDueDate: loan.nextDueDate ? new Date(loan.nextDueDate) : new Date(),
       status: loan.status
     }));
   },
@@ -309,16 +341,17 @@ const loanApi = {
   // Get a single loan by ID
   getById: async (loanId: string): Promise<Loan> => {
     const response = await axios.get(`${API_BASE_URL}/loans/${loanId}`);
-    const loan = response.data;
-    
+    const payload = extractData(response);
+    const loan = Array.isArray(payload) ? payload[0] : payload;
+
     return {
-      id: loan.id.toString(),
-      memberId: loan.memberId.toString(),
+      id: loan.id != null ? String(loan.id) : "",
+      memberId: loan.memberId != null ? String(loan.memberId) : "",
       amount: loan.amount,
-      issueDate: new Date(loan.issueDate),
+      issueDate: loan.issueDate ? new Date(loan.issueDate) : new Date(),
       totalInstallments: loan.totalInstallments,
       paidInstallments: loan.paidInstallments,
-      nextDueDate: new Date(loan.nextDueDate),
+      nextDueDate: loan.nextDueDate ? new Date(loan.nextDueDate) : new Date(),
       status: loan.status
     };
   },
@@ -326,34 +359,36 @@ const loanApi = {
   // Create a new loan
   create: async (loan: Omit<Loan, 'id'>): Promise<Loan> => {
     const response = await axios.post(`${API_BASE_URL}/loans`, loan);
-    const newLoan = response.data;
-    
+    const payload = extractData(response);
+    const record: any = Array.isArray(payload) ? payload[0] : payload;
+
     return {
-      id: newLoan.id.toString(),
-      memberId: newLoan.memberId.toString(),
-      amount: newLoan.amount,
-      issueDate: new Date(newLoan.issueDate),
-      totalInstallments: newLoan.totalInstallments,
-      paidInstallments: newLoan.paidInstallments,
-      nextDueDate: new Date(newLoan.nextDueDate),
-      status: newLoan.status
+      id: record.id != null ? String(record.id) : "",
+      memberId: record.memberId != null ? String(record.memberId) : "",
+      amount: record.amount,
+      issueDate: record.issueDate ? new Date(record.issueDate) : new Date(),
+      totalInstallments: record.totalInstallments,
+      paidInstallments: record.paidInstallments,
+      nextDueDate: record.nextDueDate ? new Date(record.nextDueDate) : new Date(),
+      status: record.status
     };
   },
   
   // Update an existing loan
   update: async (loanId: string, loan: Partial<Loan>): Promise<Loan> => {
     const response = await axios.put(`${API_BASE_URL}/loans/${loanId}`, loan);
-    const updatedLoan = response.data;
-    
+    const payload = extractData(response);
+    const record: any = Array.isArray(payload) ? payload[0] : payload;
+
     return {
-      id: updatedLoan.id.toString(),
-      memberId: updatedLoan.memberId.toString(),
-      amount: updatedLoan.amount,
-      issueDate: new Date(updatedLoan.issueDate),
-      totalInstallments: updatedLoan.totalInstallments,
-      paidInstallments: updatedLoan.paidInstallments,
-      nextDueDate: new Date(updatedLoan.nextDueDate),
-      status: updatedLoan.status
+      id: record.id != null ? String(record.id) : "",
+      memberId: record.memberId != null ? String(record.memberId) : "",
+      amount: record.amount,
+      issueDate: record.issueDate ? new Date(record.issueDate) : new Date(),
+      totalInstallments: record.totalInstallments,
+      paidInstallments: record.paidInstallments,
+      nextDueDate: record.nextDueDate ? new Date(record.nextDueDate) : new Date(),
+      status: record.status
     };
   },
   
@@ -372,13 +407,14 @@ const loanApi = {
   }): Promise<Installment[]> => {
     const queryParams = buildQueryParams(options);
     const response = await axios.get(`${API_BASE_URL}/loans/${loanId}/installments${queryParams}`);
-    
-    return response.data.map((installment: any) => ({
+    const data = extractData(response);
+
+    return (Array.isArray(data) ? data : [data]).map((installment: any) => ({
       id: String(installment.id),
-      loanId: String(installment.loanId),
-      memberId: String(installment.memberId),
+      loanId: installment.loanId != null ? String(installment.loanId) : String(loanId),
+      memberId: installment.memberId != null ? String(installment.memberId) : "",
       amount: installment.amount,
-      dueDate: new Date(installment.dueDate),
+      dueDate: installment.dueDate ? new Date(installment.dueDate) : new Date(),
       paidDate: installment.paidDate ? new Date(installment.paidDate) : null,
       status: installment.status,
       collectorId: installment.collectorId != null ? String(installment.collectorId) : ""
@@ -398,13 +434,14 @@ const installmentApi = {
   }): Promise<Installment[]> => {
     const queryParams = buildQueryParams(options);
     const response = await axios.get(`${API_BASE_URL}/installments${queryParams}`);
-    
-    return response.data.map((installment: any) => ({
+    const data = extractData(response);
+
+    return (Array.isArray(data) ? data : [data]).map((installment: any) => ({
       id: String(installment.id),
-      loanId: String(installment.loanId),
-      memberId: String(installment.memberId),
+      loanId: installment.loanId != null ? String(installment.loanId) : "",
+      memberId: installment.memberId != null ? String(installment.memberId) : "",
       amount: installment.amount,
-      dueDate: new Date(installment.dueDate),
+      dueDate: installment.dueDate ? new Date(installment.dueDate) : new Date(),
       paidDate: installment.paidDate ? new Date(installment.paidDate) : null,
       status: installment.status,
       collectorId: installment.collectorId != null ? String(installment.collectorId) : ""
@@ -414,14 +451,15 @@ const installmentApi = {
   // Get a single installment by ID
   getById: async (installmentId: string): Promise<Installment> => {
     const response = await axios.get(`${API_BASE_URL}/installments/${installmentId}`);
-    const installment = response.data;
-    
+    const payload = extractData(response);
+    const installment = Array.isArray(payload) ? payload[0] : payload;
+
     return {
-      id: String(installment.id),
-      loanId: String(installment.loanId),
-      memberId: String(installment.memberId),
+      id: installment.id != null ? String(installment.id) : "",
+      loanId: installment.loanId != null ? String(installment.loanId) : "",
+      memberId: installment.memberId != null ? String(installment.memberId) : "",
       amount: installment.amount,
-      dueDate: new Date(installment.dueDate),
+      dueDate: installment.dueDate ? new Date(installment.dueDate) : new Date(),
       paidDate: installment.paidDate ? new Date(installment.paidDate) : null,
       status: installment.status,
       collectorId: installment.collectorId != null ? String(installment.collectorId) : ""
@@ -431,34 +469,36 @@ const installmentApi = {
   // Create a new installment
   create: async (installment: Omit<Installment, 'id'>): Promise<Installment> => {
     const response = await axios.post(`${API_BASE_URL}/installments`, installment);
-    const newInstallment = response.data;
-    
+    const payload = extractData(response);
+    const record: any = Array.isArray(payload) ? payload[0] : payload;
+
     return {
-      id: String(newInstallment.id),
-      loanId: String(newInstallment.loanId),
-      memberId: String(newInstallment.memberId),
-      amount: newInstallment.amount,
-      dueDate: new Date(newInstallment.dueDate),
-      paidDate: newInstallment.paidDate ? new Date(newInstallment.paidDate) : null,
-      status: newInstallment.status,
-      collectorId: newInstallment.collectorId != null ? String(newInstallment.collectorId) : ""
+      id: record.id != null ? String(record.id) : "",
+      loanId: record.loanId != null ? String(record.loanId) : "",
+      memberId: record.memberId != null ? String(record.memberId) : "",
+      amount: record.amount,
+      dueDate: record.dueDate ? new Date(record.dueDate) : new Date(),
+      paidDate: record.paidDate ? new Date(record.paidDate) : null,
+      status: record.status,
+      collectorId: record.collectorId != null ? String(record.collectorId) : ""
     };
   },
   
   // Update an existing installment
   update: async (installmentId: string, installment: Partial<Installment>): Promise<Installment> => {
     const response = await axios.put(`${API_BASE_URL}/installments/${installmentId}`, installment);
-    const updatedInstallment = response.data;
-    
+    const payload = extractData(response);
+    const record: any = Array.isArray(payload) ? payload[0] : payload;
+
     return {
-      id: String(updatedInstallment.id),
-      loanId: String(updatedInstallment.loanId),
-      memberId: String(updatedInstallment.memberId),
-      amount: updatedInstallment.amount,
-      dueDate: new Date(updatedInstallment.dueDate),
-      paidDate: updatedInstallment.paidDate ? new Date(updatedInstallment.paidDate) : null,
-      status: updatedInstallment.status,
-      collectorId: updatedInstallment.collectorId != null ? String(updatedInstallment.collectorId) : ""
+      id: record.id != null ? String(record.id) : "",
+      loanId: record.loanId != null ? String(record.loanId) : "",
+      memberId: record.memberId != null ? String(record.memberId) : "",
+      amount: record.amount,
+      dueDate: record.dueDate ? new Date(record.dueDate) : new Date(),
+      paidDate: record.paidDate ? new Date(record.paidDate) : null,
+      status: record.status,
+      collectorId: record.collectorId != null ? String(record.collectorId) : ""
     };
   },
   
@@ -477,13 +517,14 @@ const installmentApi = {
   }): Promise<Installment[]> => {
     const queryParams = buildQueryParams(options);
     const response = await axios.get(`${API_BASE_URL}/installments/overdue${queryParams}`);
-    
-    return response.data.map((installment: any) => ({
+    const data = extractData(response);
+
+    return (Array.isArray(data) ? data : [data]).map((installment: any) => ({
       id: String(installment.id),
-      loanId: String(installment.loanId),
-      memberId: String(installment.memberId),
+      loanId: installment.loanId != null ? String(installment.loanId) : "",
+      memberId: installment.memberId != null ? String(installment.memberId) : "",
       amount: installment.amount,
-      dueDate: new Date(installment.dueDate),
+      dueDate: installment.dueDate ? new Date(installment.dueDate) : new Date(),
       paidDate: installment.paidDate ? new Date(installment.paidDate) : null,
       status: installment.status,
       collectorId: installment.collectorId != null ? String(installment.collectorId) : ""
@@ -500,13 +541,14 @@ const installmentApi = {
   }): Promise<Installment[]> => {
     const queryParams = buildQueryParams(options);
     const response = await axios.get(`${API_BASE_URL}/installments/pending${queryParams}`);
-    
-    return response.data.map((installment: any) => ({
+    const data = extractData(response);
+
+    return (Array.isArray(data) ? data : [data]).map((installment: any) => ({
       id: String(installment.id),
-      loanId: String(installment.loanId),
-      memberId: String(installment.memberId),
+      loanId: installment.loanId != null ? String(installment.loanId) : "",
+      memberId: installment.memberId != null ? String(installment.memberId) : "",
       amount: installment.amount,
-      dueDate: new Date(installment.dueDate),
+      dueDate: installment.dueDate ? new Date(installment.dueDate) : new Date(),
       paidDate: installment.paidDate ? new Date(installment.paidDate) : null,
       status: installment.status,
       collectorId: installment.collectorId != null ? String(installment.collectorId) : ""
@@ -525,28 +567,30 @@ const collectorApi = {
     filter?: Record<string, string>;
   }): Promise<Collector[]> => {
     const queryParams = buildQueryParams(options);
-    const response = await axios.get(`/collectors${queryParams}`);
-    
-    return response.data.map((collector: any) => ({
-      id: collector.id.toString(),
+    // Prefix with API_BASE_URL to match the rest of the endpoints
+    const response = await axios.get(`${API_BASE_URL}/collectors${queryParams}`);
+    const data = extractData(response);
+
+    return (Array.isArray(data) ? data : [data]).map((collector: any) => ({
+      id: collector.id != null ? String(collector.id) : "",
       name: collector.name,
       contactNumber: collector.contactNumber,
       email: collector.email,
       assignedMembers: collector.assignedMembers,
       collectionsToday: collector.collectionsToday,
       totalCollected: collector.totalCollected,
-      unionId: collector.unionId.toString()
+      unionId: collector.unionId != null ? String(collector.unionId) : ""
     }));
   },
   
   // Get a single collector by ID
   getById: async (collectorId: string): Promise<Collector> => {
-    const response = await axios.get(`/collectors/${collectorId}`);
-    const raw = Array.isArray(response.data) ? response.data[0] : response.data;
-    const collector = raw || {};
-    
+    const response = await axios.get(`${API_BASE_URL}/collectors/${collectorId}`);
+    const payload = extractData(response);
+    const collector: any = Array.isArray(payload) ? payload[0] : payload || {};
+
     return {
-      id: String(collector.id),
+      id: collector.id != null ? String(collector.id) : "",
       name: collector.name,
       contactNumber: collector.contactNumber,
       email: collector.email,
@@ -566,14 +610,15 @@ const collectorApi = {
     filter?: Record<string, string>;
   }): Promise<Installment[]> => {
     const queryParams = buildQueryParams(options);
-    const response = await axios.get(`/collectors/${collectorId}/installments${queryParams}`);
-    
-    return response.data.map((installment: any) => ({
+    const response = await axios.get(`${API_BASE_URL}/collectors/${collectorId}/installments${queryParams}`);
+    const data = extractData(response);
+
+    return (Array.isArray(data) ? data : [data]).map((installment: any) => ({
       id: String(installment.id),
-      loanId: String(installment.loanId),
-      memberId: String(installment.memberId),
+      loanId: installment.loanId != null ? String(installment.loanId) : "",
+      memberId: installment.memberId != null ? String(installment.memberId) : "",
       amount: installment.amount,
-      dueDate: new Date(installment.dueDate),
+      dueDate: installment.dueDate ? new Date(installment.dueDate) : new Date(),
       paidDate: installment.paidDate ? new Date(installment.paidDate) : null,
       status: installment.status,
       collectorId: installment.collectorId != null ? String(installment.collectorId) : ""
@@ -586,16 +631,17 @@ const summaryApi = {
   // Get collection summary
   getCollectionSummary: async (): Promise<CollectionSummary> => {
     const response = await axios.get(`${API_BASE_URL}/summary/collection`);
-    const summary = response.data;
-    
+    const payload = extractData(response);
+    const summary: any = Array.isArray(payload) ? payload[0] : payload;
+
     return {
-      totalLoans: summary.totalLoans,
-      activeLoans: summary.activeLoans,
-      completedLoans: summary.completedLoans,
-      defaultedLoans: summary.defaultedLoans,
-      totalAmount: summary.totalAmount,
-      totalCollected: summary.totalCollected,
-      pendingAmount: summary.pendingAmount
+      totalLoans: summary.totalLoans ?? 0,
+      activeLoans: summary.activeLoans ?? 0,
+      completedLoans: summary.completedLoans ?? 0,
+      defaultedLoans: summary.defaultedLoans ?? 0,
+      totalAmount: summary.totalAmount ?? 0,
+      totalCollected: summary.totalCollected ?? 0,
+      pendingAmount: summary.pendingAmount ?? 0
     };
   }
 };
